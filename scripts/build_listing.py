@@ -354,21 +354,8 @@ def render_html(
     template = template_path.read_text(encoding="utf-8")
 
     raw_author = source.get("author")
-    if isinstance(raw_author, dict):
-        author_name = str(raw_author.get("name") or listing.get("author") or "Dreaminko")
-        author_url = raw_author.get("url")
-    else:
-        author_name = str(raw_author or listing.get("author") or "Dreaminko")
-        author_url = None
-
+    author_url = raw_author.get("url") if isinstance(raw_author, dict) else None
     safe_author_url = author_url if _is_http_url(author_url) else "https://github.com/Dreaminko"
-    if _is_http_url(author_url):
-        author_html = (
-            f'<a href="{_esc(author_url)}" target="_blank" '
-            f'rel="noopener noreferrer">{_esc(author_name)}</a>'
-        )
-    else:
-        author_html = _esc(author_name)
 
     packages: dict[str, dict[str, dict[str, Any]]] = listing.get("packages", {})
     pkg_count = len(packages)
@@ -407,10 +394,8 @@ def render_html(
     listing_url = str(listing["url"])
     tokens = {
         "__LISTING_NAME__": _esc(listing["name"]),
-        "__BRAND_NAME__": _esc(author_name),
         "__DESCRIPTION__": _esc(source.get("description") or ""),
         "__AUTHOR_URL__": _esc(safe_author_url),
-        "__AUTHOR_HTML__": author_html,
         "__LISTING_URL__": _esc(listing_url),
         "__VCC_URI__": _esc(f"vcc://vpm/addRepo?url={listing_url}"),
         "__SUMMARY_CHIP__": summary_chip,
