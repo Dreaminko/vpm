@@ -1,0 +1,13 @@
+{
+  "name": "Dreaminko's VPM Repository",
+  "id": "dev.dreaminko.vpm",
+  "url": "https://vpm.dreamo.ink/index.json",
+  "author": {
+    "name": "Dreaminko",
+    "url": "https://github.com/Dreaminko"
+  },
+  "description": "Official VRChat Package Manager (VPM) repository for Unity & VRChat packages by Dreaminko.",
+  "githubRepos": [
+    "Dreaminko/UniText"
+  ]
+}

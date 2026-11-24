@@ -1,0 +1,73 @@
+name: Build & Deploy VPM Listing
+
+on:
+  repository_dispatch:
+    types: [package-released]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      expect_package:
+        description: 'Optional package ID to wait for in GitHub Releases'
+        required: false
+      expect_version:
+        description: 'Optional package version to wait for in GitHub Releases'
+        required: false
+  schedule:
+    - cron: '0 3 * * 1'
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run VPM listing unit tests
+        run: python scripts/test_listing.py
+
+      - name: Build VPM listing and landing page
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPECT_PACKAGE: ${{ github.event.client_payload.package || inputs.expect_package }}
+          EXPECT_VERSION: ${{ github.event.client_payload.version || inputs.expect_version }}
+        run: |
+          ARGS=(--out-dir _site)
+          if [ -n "${EXPECT_PACKAGE}" ] && [ -n "${EXPECT_VERSION}" ]; then
+            ARGS+=(--expect-package "${EXPECT_PACKAGE}" --expect-version "${EXPECT_VERSION}")
+          fi
+          python scripts/build_listing.py "${ARGS[@]}"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
